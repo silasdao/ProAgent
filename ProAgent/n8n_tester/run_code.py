@@ -62,9 +62,9 @@ class n8nNodeRunner():
             # import pdb; pdb.set_trace()
             print(termcolor.colored(traceback.format_exc() + str(e)))
             tb = traceback.extract_tb(e.__traceback__)
-            
+
             error = n8nRunningException(e)
-            error.error_message = f"{type(e).__name__}: " + str(e)
+            error.error_message = f"{type(e).__name__}: {str(e)}"
             self.node.last_runtime_info.runtime_status = RunTimeStatus.ErrorRaisedHere
 
         assert error != None
@@ -74,11 +74,11 @@ class n8nNodeRunner():
                 line_no = k + 1
                 break
 
-        error_codes = ["--> "+code_split[line_no - 1]]
+        error_codes = [f"--> {code_split[line_no - 1]}"]
         if line_no < len(code_split) and code_split[line_no].strip() != "":
-            error_codes.append( "    "+ code_split[line_no])
-        if line_no - 2 >= 0 and code_split[line_no - 2].strip() != "":
-            error_codes = ["    "+ code_split[line_no - 2]] + error_codes
+            error_codes.append(f"    {code_split[line_no]}")
+        if line_no >= 2 and code_split[line_no - 2].strip() != "":
+            error_codes = [f"    {code_split[line_no - 2]}"] + error_codes
 
         error_codes = [f"In Function: transparent_{self.node.node_meta.node_type.name}"] + error_codes
         error.add_context_stack(error_codes)
@@ -126,7 +126,7 @@ class n8nWorkflowRunner():
         input_data_var_name = f"{self.workflow_name}_input_data"
         output_data_var_name = f"{self.workflow_name}_output_data"
         self.name_space[input_data_var_name] = input_data
-        workflow_code = workflow_code + f"\n{output_data_var_name}={self.workflow_name}({input_data_var_name})"
+        workflow_code = f"{workflow_code}\n{output_data_var_name}={self.workflow_name}({input_data_var_name})"
         error = None
         tb = None
         # print(self.name_space.keys())
@@ -145,13 +145,13 @@ class n8nWorkflowRunner():
         except Exception as e:
             # import pdb; pdb.set_trace()
             tb = traceback.extract_tb(e.__traceback__)
-            
+
             if isinstance(e, n8nRunningException):
                 error = e
                 self.workflow.last_runtime_info.runtime_status = RunTimeStatus.ErrorRaisedInner
             else:
                 error = n8nRunningException(e)
-                error.error_message = f"{type(e).__name__}: " + str(e)
+                error.error_message = f"{type(e).__name__}: {str(e)}"
                 self.workflow.last_runtime_info.runtime_status = RunTimeStatus.ErrorRaisedHere
 
         assert error != None
@@ -168,14 +168,14 @@ class n8nWorkflowRunner():
         # print(f"frame.lineno: {frame.lineno}, len(code_split): {len(code_split)}")
 
         if frame.lineno > 0:
-            error_codes = ["--> "+code_split[frame.lineno - 1]]
+            error_codes = [f"--> {code_split[frame.lineno - 1]}"]
             if frame.lineno < len(code_split) and code_split[frame.lineno].strip() != "":
-                error_codes.append( "    "+ code_split[frame.lineno])
-            if frame.lineno - 2 >= 0 and code_split[frame.lineno - 2].strip() != "":
-                error_codes = ["    "+ code_split[frame.lineno - 2]] + error_codes
+                error_codes.append(f"    {code_split[frame.lineno]}")
+            if frame.lineno >= 2 and code_split[frame.lineno - 2].strip() != "":
+                error_codes = [f"    {code_split[frame.lineno - 2]}"] + error_codes
             error_codes = [f"In Function: {frame.name}"] + error_codes
             error.add_context_stack(error_codes)
-        
+
         # import pdb; pdb.set_trace()
         # add local_var info
         local_var_info = "Note: if there is 'KeyError' in the error message, it may be due to the wrong usage of output data. The output data info may help you: \n[Output Data Info]\n"
@@ -187,7 +187,7 @@ class n8nWorkflowRunner():
                             action_output_data = self.name_space[action_name].node.last_runtime_info.output_data
                     # if action_output_data is not None and len(action_output_data[0].keys()) > 0:
                             local_var_info += f"the output data of function `{action_name}` is: `{action_output_data}`\n"
-            
+
         error.add_context_stack([local_var_info])
         raise error
 
@@ -248,18 +248,15 @@ class n8nPythonCodeRunner():
                     output_data=deepcopy(trigger_input),
                 )
                 break
-        if trigger_input == None:
-            pass
-
         name_space = {}
         for node in self.nodes:
-            
+
             name_space[node.get_name()] = n8nNodeRunner(node=node, name_space={})
         for workflow_name, workflow in self.workflows.items():
             name_space[workflow_name] = n8nWorkflowRunner(workflow_name=workflow_name, workflow=workflow, name_space={})
-        for key in name_space.keys():
+        for key in name_space:
             name_space[key].name_space = name_space
-        
+
 
         self.error_stack_str = []
         self.std_output = ""
@@ -281,11 +278,9 @@ class n8nPythonCodeRunner():
         for node in self.nodes:
             lines.extend(node.print_self())
             lines.append("\n\n")
-        
-        for workflow_name, workflow in self.workflows.items():
-            lines.append(workflow.print_self())
-            lines.append("\n\n")
 
+        for workflow_name, workflow in self.workflows.items():
+            lines.extend((workflow.print_self(), "\n\n"))
         lines = [" "*indent + line for line in lines]
         return "\n".join(lines)
     
@@ -301,26 +296,21 @@ class n8nPythonCodeRunner():
                     lines.extend(param_des_lines)
             else:
                 lines.append("This function doesn't need params")
-            lines.append(node.last_runtime_info.to_str())
-
-            # lines.append("Avaliable example inputs for this function")
-            # example_inout_pair = mock_interface.get_node_example_input(node, top_k=2)
-            # for k, data in enumerate(example_inout_pair):
-            #     pass
-            lines.append("\"\"\"")
+            lines.extend((node.last_runtime_info.to_str(), "\"\"\""))
             lines.extend(node.print_self())
             lines.append("\n\n")
-        
-        
+
+
         for workflow_name, workflow in self.workflows.items():
-            lines.append("\"\"\"")
-            lines.append(workflow.last_runtime_info.to_str())
-            lines.append("\"\"\"")
-
-            lines.append(workflow.print_self())
-            lines.append("\n\n")
-
-
+            lines.extend(
+                (
+                    "\"\"\"",
+                    workflow.last_runtime_info.to_str(),
+                    "\"\"\"",
+                    workflow.print_self(),
+                    "\n\n",
+                )
+            )
         running_prompt = f"""
 The directly running result for now codes with print results are as following:
 
@@ -329,10 +319,7 @@ The directly running result for now codes with print results are as following:
 
 You can also see the runnning result for all functions in there comments."""
 
-        lines.append("\"\"\"")
-        lines.append(running_prompt)
-        lines.append("\"\"\"")
-
+        lines.extend(("\"\"\"", running_prompt, "\"\"\""))
         lines = [" "*indent + line for line in lines]
         return "\n".join(lines)
 

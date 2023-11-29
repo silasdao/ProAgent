@@ -128,9 +128,7 @@ class n8nParameter():
         Returns:
             int: The depth of the current node in the tree.
         """
-        if self.father == None:
-            return 1
-        return self.father.get_depth() + 1
+        return 1 if self.father is None else self.father.get_depth() + 1
 
     @classmethod
     @abstractmethod
@@ -156,25 +154,24 @@ class n8nParameter():
             AssertionError: If the parameter type is `FIXEDCOLLECTION` and the parent node has multiple values.
         """
 
-        if self.father == None:
+        if self.father is None:
             return f"params[\"{self.name}\"]"
 
         prefix_names = self.father.get_parameter_name()
 
         if self.father.param_type == n8nParameterType.COLLECTION and self.father.multiple_values:
             prefix_names += "[0]"
-            return prefix_names +f"[\"{self.name}\"]"
+            return f'{prefix_names}[\"{self.name}\"]'
         elif self.father.param_type == n8nParameterType.FIXEDCOLLECTION and self.father.multiple_values:
             assert self.param_type == n8nParameterType.COLLECTION, f"{self.param_type.name}"
-            names = f"{prefix_names}[\"{self.name}\"]"
-            return names
+            return f'{prefix_names}[\"{self.name}\"]'
         elif self.father.param_type == n8nParameterType.RESOURCELOCATOR:
             for key,value in self.father.meta.items():
                 if value == self:
                     name = f"{prefix_names}[\"value\"](when \"mode\"=\"{key}\")"
                     return name
         else:
-            return prefix_names +f"[\"{self.name}\"]"
+            return f'{prefix_names}[\"{self.name}\"]'
     
     def refresh(self):
         """
@@ -233,8 +230,7 @@ class n8nNumber(n8nParameter):
         self.var = ""
     @classmethod
     def visit(cls, param_json):
-        node = n8nNumber(param_json)
-        return node
+        return n8nNumber(param_json)
 
     @abstractmethod
     def parse_value(self, value: any) -> (ToolCallStatus, str):
@@ -269,17 +265,17 @@ class n8nNumber(n8nParameter):
         if self.default != None:
             line1 += f" = {self.default}"
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description}"
         if self.no_data_expression:
-            line1 += f". You can't use expression."
+            line1 += ". You can't use expression."
         return [line1]
 
     def to_json(self):
@@ -287,10 +283,7 @@ class n8nNumber(n8nParameter):
         """
         if not self.data_is_set:
             return None
-        if self.use_expression:
-            return self.var
-        else:
-            return self.fixed_value
+        return self.var if self.use_expression else self.fixed_value
 
 
 @dataclass
@@ -304,9 +297,7 @@ class n8nBoolean(n8nParameter):
         self.var = ""
     @classmethod
     def visit(cls, param_json):
-        node = n8nBoolean(param_json)
-
-        return node
+        return n8nBoolean(param_json)
 
     @abstractmethod
     def parse_value(self, value: any) -> (ToolCallStatus, str):
@@ -365,17 +356,17 @@ class n8nBoolean(n8nParameter):
         if self.default != None:
             line1 += f" = {self.default}"
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description}"
         if self.no_data_expression:
-            line1 += f". You can't use expression."
+            line1 += ". You can't use expression."
         return [line1]
     
     def to_json(self):
@@ -387,10 +378,7 @@ class n8nBoolean(n8nParameter):
         """
         if not self.data_is_set:
             return None
-        if self.use_expression:
-            return self.var
-        else:
-            return self.fixed_value
+        return self.var if self.use_expression else self.fixed_value
 
 @dataclass
 class n8nString(n8nParameter):
@@ -400,9 +388,7 @@ class n8nString(n8nParameter):
         self.value = ""
     @classmethod
     def visit(cls, param_json):
-        node = n8nString(param_json)
-        #TODO: validation
-        return node
+        return n8nString(param_json)
 
     @abstractmethod
     def parse_value(self, value: any) -> (ToolCallStatus, str):
@@ -466,23 +452,21 @@ class n8nString(n8nParameter):
         if self.default != None:
             line1 += f" = \"{self.default}\""
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description}"
         if self.no_data_expression:
-            line1 += f". You can't use expression."
+            line1 += ". You can't use expression."
         return [line1]
     
     def to_json(self):
-        if not self.data_is_set:
-            return None
-        return self.value
+        return None if not self.data_is_set else self.value
 
 @dataclass
 class n8nOption(n8nParameter):
@@ -514,8 +498,6 @@ class n8nOption(n8nParameter):
                 if "description" in cont.keys():
                     enum_des += f". {cont['description']}"
                 node.enum_descriptions.append(enum_des)
-        else:
-            pass
         return node
 
     @abstractmethod
@@ -569,30 +551,29 @@ class n8nOption(n8nParameter):
 
         """
         all_name = self.get_parameter_name()
-        lines = []
         line1 = f"{prefix_ids} {all_name}: enum[string]"
 
         if self.default != None:
             line1 += f" = \"{self.default}\""
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description} "
         if self.no_data_expression:
-            line1 += f" You can't use expression."
-        line1 += f". Available values:"
-        lines.append(line1)
-        for k, (enum,des) in enumerate(zip(self.enum, self.enum_descriptions)):
-            lines.append(f"  {prefix_ids}.{k} value==\"{enum}\": {des}")
-        
-        lines = [" "*indent + line for line in lines]
-        return lines
+            line1 += " You can't use expression."
+        line1 += ". Available values:"
+        lines = [line1]
+        lines.extend(
+            f'  {prefix_ids}.{k} value==\"{enum}\": {des}'
+            for k, (enum, des) in enumerate(zip(self.enum, self.enum_descriptions))
+        )
+        return [" "*indent + line for line in lines]
     
     def to_json(self):
         """
@@ -602,9 +583,7 @@ class n8nOption(n8nParameter):
             None: If the data is not set.
             Any: The JSON value of the object.
         """
-        if not self.data_is_set:
-            return None
-        return self.value
+        return None if not self.data_is_set else self.value
 
 @dataclass
 class n8nCollection(n8nParameter):
@@ -723,12 +702,9 @@ class n8nCollection(n8nParameter):
 
         elif type(value) == str:
             return ToolCallStatus.ParamTypeError, f"{self.get_parameter_name()} doesn't support expression now" 
-       
+
         else:
-            if self.multiple_values:
-                available_type = "list[dict]"
-            else:
-                available_type = "dict"
+            available_type = "list[dict]" if self.multiple_values else "dict"
             return ToolCallStatus.ParamTypeError, f"{self.get_parameter_name()} can only be parsed as {available_type}, got {type(value)}" 
 
 
@@ -745,38 +721,38 @@ class n8nCollection(n8nParameter):
             list[str]: The lines of the function description.
         """
         all_name = self.get_parameter_name()
-        lines = []
-        if self.multiple_values:
-            type_string = "list[dict]"
-        else:
-            type_string = "dict"
+        type_string = "list[dict]" if self.multiple_values else "dict"
         line1 = f"{prefix_ids} {all_name}: {type_string}"
 
         if self.default != None:
             line1 += f" = {self.default}"
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description} "
         if self.no_data_expression:
-            line1 += f" You can't use expression."
-        line1 += f". properties description:"
-        lines.append(" "*indent + line1)
+            line1 += " You can't use expression."
+        line1 += ". properties description:"
+        lines = [" "*indent + line1]
         if self.get_depth() >= max_depth and self.required == False:
             lines.append(" "*indent+ "  ...hidden...")
         elif self.required:
             for k, (property_name, property) in enumerate(self.meta.items()):
-                sublines = property.to_description(prefix_ids+f".{k}", indent=indent+2, max_depth=1000)
+                sublines = property.to_description(
+                    f"{prefix_ids}.{k}", indent=indent + 2, max_depth=1000
+                )
                 lines.extend(sublines)
         else:
             for k, (property_name, property) in enumerate(self.meta.items()):
-                sublines = property.to_description(prefix_ids+f".{k}", indent=indent+2, max_depth=max_depth)
+                sublines = property.to_description(
+                    f"{prefix_ids}.{k}", indent=indent + 2, max_depth=max_depth
+                )
                 lines.extend(sublines)
 
         return lines
@@ -811,13 +787,15 @@ class n8nCollection(n8nParameter):
         """
         if not self.data_is_set:
             return None
-        
+
         if self.multiple_values:
-            json_data = [{key: value.to_json() for key, value in data.items()} for data in self.value]
-            return json_data
+            return [
+                {key: value.to_json() for key, value in data.items()}
+                for data in self.value
+            ]
         else:
             json_data = {key: value.to_json() for key, value in self.value[0]}
-        
+
         return json_data
 
     
@@ -973,7 +951,6 @@ class n8nFixedCollection(n8nParameter):
             list[str]: The lines of the function comment.
         """
         all_name = self.get_parameter_name()
-        lines = []
         if self.multiple_values:
             type_string = "dict[str,list[dict[str,any]]]"
         else:
@@ -983,29 +960,32 @@ class n8nFixedCollection(n8nParameter):
         if self.default != None:
             line1 += f" = {self.default}"
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
 
         line1 +=  f": {self.description} "
         if self.no_data_expression:
-            line1 += f" You can't use expression."
-        line1 += f". properties description:"
-        lines.append(" "*indent + line1)
-
+            line1 += " You can't use expression."
+        line1 += ". properties description:"
+        lines = [" "*indent + line1]
         if self.get_depth() >= max_depth and self.required == False:
             lines.append(" "*indent+ "  ...hidden...")
         elif self.required:
             for k, (property_name, property) in enumerate(self.meta.items()):
-                sublines = property.to_description(prefix_ids+f".{k}", indent=indent+2, max_depth=1000)
+                sublines = property.to_description(
+                    f"{prefix_ids}.{k}", indent=indent + 2, max_depth=1000
+                )
                 lines.extend(sublines)
         else:
             for k, (property_name, property) in enumerate(self.meta.items()):
-                sublines = property.to_description(prefix_ids+f".{k}", indent=indent+2, max_depth=max_depth)
+                sublines = property.to_description(
+                    f"{prefix_ids}.{k}", indent=indent + 2, max_depth=max_depth
+                )
                 lines.extend(sublines)
 
         return lines
@@ -1075,28 +1055,25 @@ class n8nResourceLocator(n8nParameter):
             list[str]: The lines of the function comment.
         """
         all_name = self.get_parameter_name()
-        lines = []
         type_string = "dict{\"mode\":enum(str),\"values\":any}"
         line1 = f"{prefix_ids} {all_name}: {type_string}"
 
         if self.default != None:
             line1 += f" = {self.default}"
         if self.display_string != "":
-            if self.required:
-                line1 += f", Required when ({self.display_string}), otherwise do not provide"
-            else:
-                line1 += f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
-        else:
-            if self.required:
-                line1 += f", Required"
-    
+            line1 += (
+                f", Required when ({self.display_string}), otherwise do not provide"
+                if self.required
+                else f", Activate(Not Required) when ({self.display_string}), otherwise do not provide"
+            )
+        elif self.required:
+            line1 += ", Required"
+
         line1 +=  f": {self.description} "
         if self.no_data_expression:
-            line1 += f" You can't use expression."
+            line1 += " You can't use expression."
         line1 += f". \"mode\" should be one of {list(self.meta.keys())}: "
-        lines.append(" "*indent + line1)
-
-
+        lines = [" "*indent + line1]
         if self.get_depth() >= max_depth and self.required == False:
             lines.append(" "*indent+ "  ...hidden...")
         elif self.required:
@@ -1124,11 +1101,7 @@ class n8nResourceLocator(n8nParameter):
         """
         if not self.data_is_set:
             return None
-        json_data = {
-            "mode": self.mode,
-            "value": self.value.to_json()
-        }
-        return json_data
+        return {"mode": self.mode, "value": self.value.to_json()}
 
     @abstractmethod
     def parse_value(self, value: any) -> (ToolCallStatus, str):
@@ -1144,7 +1117,10 @@ class n8nResourceLocator(n8nParameter):
         Raises:
             None
         """
-        if type(value) == dict and (list(value.keys()) == ["mode","value"] or list(value.keys()) == ["value","mode"]):
+        if type(value) == dict and list(value.keys()) in [
+            ["mode", "value"],
+            ["value", "mode"],
+        ]:
             if value["mode"] not in self.meta.keys():
                 return ToolCallStatus.UndefinedParam, f"Undefined mode \"{value['mode']}\" for {self.get_parameter_name()}, supported modes: {list(self.meta.keys())}"
             value_value = value["value"]

@@ -21,8 +21,7 @@ class n8nPythonWorkflow():
             str: The cleaned implement code.
         """
         implement_code_clean = self.implement_code
-        implement_code_clean = re.sub(r'""".*?"""', '', implement_code_clean, flags=re.DOTALL)
-        return implement_code_clean
+        return re.sub(r'""".*?"""', '', implement_code_clean, flags=re.DOTALL)
 
     def print_self(self):
         """
@@ -43,20 +42,22 @@ class n8nPythonWorkflow():
         Returns:
             list: The lines of the generated function comment.
         """
-        lines = []
         name = "mainWorkflow" if self.workflow_type == WorkflowType.Main else f"subworkflow_{self.workflow_id}"
-        input_name = "trigger_input" if self.workflow_type == WorkflowType.Main else f"father_workflow_input"
+        input_name = (
+            "trigger_input"
+            if self.workflow_type == WorkflowType.Main
+            else "father_workflow_input"
+        )
         line1 = f"def {name}({input_name}: [{{...}}]):"
-        lines.append(line1)
+        lines = [line1]
         if self.comments != "" or self.TODOS != []:
             lines.append(f"  \"\"\"")
         if self.comments != "":
             lines.append(f"  comments: {self.comments}")
-        
+
         if self.TODOS != []:
-            lines.append(f"  TODOs: ")
-            for todo in self.TODOS:
-                lines.append(f"    - {todo}")
+            lines.append("  TODOs: ")
+            lines.extend(f"    - {todo}" for todo in self.TODOS)
         lines.append(f"  \"\"\"")
 
         if self.implement_code != "":

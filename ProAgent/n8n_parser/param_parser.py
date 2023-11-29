@@ -15,15 +15,14 @@ def parse_display_options(display_options, node: n8nPythonNode) -> bool:
     Returns:
         bool: True if the display options should be parsed, False otherwise.
     """
-    if "show" in display_options.keys():
-        if "resource" in display_options["show"]:
-            if node.node_meta.resource_name not in display_options["show"]["resource"]:
-                return False
-        if "operation" in display_options["show"]:
-            if node.node_meta.operation_name not in display_options["show"]["operation"]:
-                return False
-    else:
+    if "show" not in display_options.keys():
         return False
+    if "resource" in display_options["show"]:
+        if node.node_meta.resource_name not in display_options["show"]["resource"]:
+            return False
+    if "operation" in display_options["show"]:
+        if node.node_meta.operation_name not in display_options["show"]["operation"]:
+            return False
     return True
 
 def parse_properties(node: n8nPythonNode):

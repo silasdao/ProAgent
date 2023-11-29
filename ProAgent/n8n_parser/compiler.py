@@ -81,7 +81,7 @@ class Compiler():
 
         if no_resource:
             integration_data["default"] = {}
-        
+
 
         for property in integration_json["properties"]:
             if property["name"] == "operation":
@@ -91,7 +91,9 @@ class Compiler():
                     assert len(property["displayOptions"]["show"]["resource"]) == 1
                     target_resource_name = property["displayOptions"]["show"]["resource"][0]
 
-                    assert target_resource_name in integration_data.keys(), f"{target_resource_name} in {integration_data.keys()}"
+                    assert (
+                        target_resource_name in integration_data
+                    ), f"{target_resource_name} in {integration_data.keys()}"
 
                 target_resource = integration_data[target_resource_name]
                 for operation in property["options"]:
@@ -139,12 +141,12 @@ class Compiler():
                 des += CONFIG.default_knowledge[integration_name]
 
             output_description_list.append(f"{k1+1}.integration={integration_name}: {des}")
-            for k2,resource in enumerate(list( data.keys())):
-                for k3, operation in enumerate(list(data[resource].keys())):
-                    new_line = f"  {k1+1}.{operation_counter}: " + data[resource][operation].to_action_string()
+            for resource in list( data.keys()):
+                for operation in list(data[resource].keys()):
+                    new_line = f"  {k1 + 1}.{operation_counter}: {data[resource][operation].to_action_string()}"
                     operation_counter += 1
                     output_description_list.append(new_line)
-        
+
         return "\n".join(output_description_list)
 
 
@@ -234,7 +236,7 @@ class Compiler():
             tool_name=tool_name,
         )
         for react_key in ["thought","plan","criticism"]:
-            if react_key in tool_input.keys():
+            if react_key in tool_input:
                 action.__setattr__(react_key, tool_input[react_key])
                 tool_input.pop(react_key)
 
@@ -245,16 +247,16 @@ class Compiler():
 
         tool_status_code = ToolCallStatus.ToolCallSuccess
         tool_output = ""
-        if tool_name == "function_define":
+        if tool_name == "ask_user_help":
+            tool_status_code, tool_output = self.ask_user_help(tool_input=tool_input)
+        elif tool_name == "function_define":
             tool_status_code, tool_output = self.handle_function_define(tool_input=tool_input)
         elif tool_name == "function_rewrite_params":
             tool_status_code, tool_output = self.handle_rewrite_params(tool_input=tool_input)
-        elif tool_name == "workflow_implment":
-            tool_status_code, tool_output = self.handle_workflow_implement(tool_input=tool_input)
-        elif tool_name == "ask_user_help":
-            tool_status_code, tool_output = self.ask_user_help(tool_input=tool_input)
         elif tool_name == "task_submit":
             tool_status_code, tool_output = self.task_submit(tool_input=tool_input)
+        elif tool_name == "workflow_implment":
+            tool_status_code, tool_output = self.handle_workflow_implement(tool_input=tool_input)
         else:
             tool_status_code = ToolCallStatus.NoSuchTool
             tool_output = json.dumps({"error": f"No such action {tool_name}", "result": "Nothing Happened", "status": tool_status_code.name}, ensure_ascii=False)
@@ -264,19 +266,18 @@ class Compiler():
 
         print_action_tool(action)
 
-        if CONFIG.environment == ENVIRONMENT.Production:
-            if self.recorder.is_final_cache():
-                self.update_runtime()
-            pass
-        else:
-            if tool_status_code == ToolCallStatus.ToolCallSuccess:
-                self.update_runtime()
-
+        if (
+            CONFIG.environment == ENVIRONMENT.Production
+            and self.recorder.is_final_cache()
+            or CONFIG.environment != ENVIRONMENT.Production
+            and tool_status_code == ToolCallStatus.ToolCallSuccess
+        ):
+            self.update_runtime()
         self.recorder.regist_tool_call(
             action=action,
             now_code=self.code_runner.print_code()
         )
-    
+
         return action
 
     def handle_workflow_implement(self, tool_input) -> (ToolCallStatus, str):

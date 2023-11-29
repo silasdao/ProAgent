@@ -36,7 +36,6 @@ class n8nRunningException(Exception):
             None
         """
         self.code_stack.append(code_context)
-        pass
 
 class anonymous_class():
     def __init__(self, node: n8nPythonNode,*args, **kwargs):
@@ -58,11 +57,10 @@ class anonymous_class():
         """
 
         output_data, error = run_node(node=self.node, input_data=input_data)
-        if error != "":
-            my_error = n8nRunningException(error)
-            raise my_error
-        else:
+        if error == "":
             return output_data
+        my_error = n8nRunningException(error)
+        raise my_error
 
 def _get_constant_workflow(input_data):
     """
@@ -130,25 +128,21 @@ def _get_constant_workflow(input_data):
             ]
         }
     })
-    
+
     workflow_nodes = [node_trigger,node_code, node_var]
 
     workflow_versionId = str(uuid.uuid4())
     workflow_name = "Simple Workflow"
-    workflow = {
+    return {
         # "id": workflow_id,
         "versionId": workflow_versionId,
         "name": workflow_name,
         "nodes": workflow_nodes,
         "connections": workflow_connection,
         "active": False,
-        "settings": {
-            "executionOrder": "v1"
-        },
-        "tags": []
+        "settings": {"executionOrder": "v1"},
+        "tags": [],
     }
-
-    return workflow
 
 def run_node(node: n8nPythonNode, input_data: list[dict] = [{}]) -> tuple[str, str]:
     """Execute a specified node.
@@ -166,7 +160,7 @@ def run_node(node: n8nPythonNode, input_data: list[dict] = [{}]) -> tuple[str, s
 
     constant_workflow["id"] = credentials.get_workflow_id()
     node_var = constant_workflow["nodes"][-1]
-    node_var["type"] = "n8n-nodes-base." + node.node_meta.integration_name
+    node_var["type"] = f"n8n-nodes-base.{node.node_meta.integration_name}"
 
     if credentials.query(node.node_meta.integration_name) != None:
         credential_item = credentials.query(node.node_meta.integration_name)
@@ -182,7 +176,7 @@ def run_node(node: n8nPythonNode, input_data: list[dict] = [{}]) -> tuple[str, s
         param = value.to_json()
         if param != None:
             param_json[key] = param
-    
+
     if 'json' in input_data[0].keys():
         node_var['parameters'] = input_data[0]['json']
         node_var["parameters"].update(param_json)
@@ -195,7 +189,7 @@ def run_node(node: n8nPythonNode, input_data: list[dict] = [{}]) -> tuple[str, s
 
     if node.node_meta.integration_name == 'slack':
         node_var["parameters"]["authentication"] = "oAuth2"
-        
+
     if node.node_meta.integration_name == 'googleSheets':
         node_var["parameters"]["operation"] = node.node_meta.operation_name
         node_var["typeVersion"] = 4
@@ -239,7 +233,7 @@ def run_node(node: n8nPythonNode, input_data: list[dict] = [{}]) -> tuple[str, s
     error = ""
 
     # check input data
-    if input_data == None or len(input_data) == 0:
+    if input_data is None or not input_data:
         warning_prompt = "WARNING: There is nothing in input_data. This may cause the failure of current node execution.\n"
         print(colored(warning_prompt, color='yellow'))
         output_data += warning_prompt

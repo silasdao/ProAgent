@@ -17,8 +17,7 @@ def trigger_0():
   """
   params = {}
   function = transparent_trigger(integration="manualTrigger", resource="default", operation="default")
-  output_data = function.run(input_data=None, params=params)
-  return output_data
+  return function.run(input_data=None, params=params)
 
 
 
@@ -59,8 +58,7 @@ def action_0(input_data: List[Dict] =  [{...}]):
              }
            }
   function = transparent_action(integration="googleSheets", resource="sheet", operation="read")
-  output_data = function.run(input_data=input_data, params=params)
-  return output_data
+  return function.run(input_data=input_data, params=params)
 
 
 
@@ -107,8 +105,7 @@ def action_1(input_data: List[Dict] =  [{...}]):
              }
            }
   function = transparent_action(integration="slack", resource="message", operation="post")
-  output_data = function.run(input_data=input_data, params=params)
-  return output_data
+  return function.run(input_data=input_data, params=params)
 
 
 
@@ -138,8 +135,7 @@ def action_2(input_data: List[Dict] =  [{...}]):
   """
   params = {}  # to be Implemented
   function = transparent_action(integration="gmail", resource="message", operation="send")
-  output_data = function.run(input_data=input_data, params=params)
-  return output_data
+  return function.run(input_data=input_data, params=params)
 
 
 
@@ -162,8 +158,7 @@ def action_3(input_data: List[Dict] =  [{...}]):
   """
   params = {}  # to be Implemented
   function = transparent_action(integration="aiCompletion", resource="default", operation="default")
-  output_data = function.run(input_data=input_data, params=params)
-  return output_data
+  return function.run(input_data=input_data, params=params)
 
 
 

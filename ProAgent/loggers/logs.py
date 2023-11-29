@@ -253,9 +253,7 @@ class Logger(metaclass=Singleton):
         if message:
             if isinstance(message, list):
                 message = " ".join(message)
-        self.logger.log(
-            level, message, extra={"title": str(title), "color": str(title_color)}
-        )
+        self.logger.log(level, message, extra={"title": title, "color": title_color})
 
     def set_level(self, level):
         """
@@ -357,7 +355,7 @@ class TypingConsoleHandler(logging.StreamHandler):
             transfer_enter = "<ENTER>"
             msg_transfered = str(msg).replace('\n', transfer_enter)
             transfer_space = "<4SPACE>"
-            msg_transfered = str(msg_transfered).replace('    ', transfer_space)
+            msg_transfered = msg_transfered.replace('    ', transfer_space)
             words = msg_transfered.split()
             words = [word.replace(transfer_enter, '\n') for word in words]
             words = [word.replace(transfer_space, '    ') for word in words]
@@ -457,22 +455,14 @@ def print_action_base(action: Action):
         None
     """
     if action.content != "":
-        logger.typewriter_log(
-            f"content:", Fore.YELLOW, f"{action.content}"
-        )
-    logger.typewriter_log(
-        f"Thought:", Fore.YELLOW, f"{action.thought}"
-    )
+        logger.typewriter_log("content:", Fore.YELLOW, f"{action.content}")
+    logger.typewriter_log("Thought:", Fore.YELLOW, f"{action.thought}")
     if len(action.plan) > 0:
-        logger.typewriter_log(
-            f"Plan:", Fore.YELLOW,
-        )
+        logger.typewriter_log("Plan:", Fore.YELLOW)
         for line in action.plan:
             line = line.lstrip("- ")
             logger.typewriter_log("- ", Fore.GREEN, line.strip())
-    logger.typewriter_log(
-        f"Criticism:", Fore.YELLOW, f"{action.criticism}"
-    )
+    logger.typewriter_log("Criticism:", Fore.YELLOW, f"{action.criticism}")
 
 def print_action_tool(action: Action):
     """
@@ -484,17 +474,11 @@ def print_action_tool(action: Action):
     Returns:
         None
     """
-    logger.typewriter_log(
-        f"Tool:", Fore.BLUE, f"{action.tool_name}"
-    )
-    logger.typewriter_log(
-        f"Tool Input:", Fore.BLUE, f"{action.tool_input}"
-    )
+    logger.typewriter_log("Tool:", Fore.BLUE, f"{action.tool_name}")
+    logger.typewriter_log("Tool Input:", Fore.BLUE, f"{action.tool_input}")
 
     output = action.tool_output if action.tool_output != "" else "None"
-    logger.typewriter_log(
-        f"Tool Output:", Fore.BLUE, f"{output}"
-    )
+    logger.typewriter_log("Tool Output:", Fore.BLUE, f"{output}")
 
     color = Fore.RED
     if action.tool_output_status == ToolCallStatus.ToolCallSuccess:
@@ -503,5 +487,7 @@ def print_action_tool(action: Action):
         color = Fore.YELLOW
 
     logger.typewriter_log(
-        f"Tool Call Status:", Fore.BLUE, f"{color}{action.tool_output_status.name}{Style.RESET_ALL}"
+        "Tool Call Status:",
+        Fore.BLUE,
+        f"{color}{action.tool_output_status.name}{Style.RESET_ALL}",
     )

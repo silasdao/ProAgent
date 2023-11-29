@@ -21,7 +21,7 @@ class MockInput():
         self.persist_on_destruction = persist_on_destruction
         # self.mock_data = {}
         self.mock_data = defaultdict(lambda: defaultdict(lambda: defaultdict(lambda: [{}])))
-        
+
         for file_name in tqdm(os.listdir(self.mock_pair_dir),desc="loading all MockInput from Disk"):
             assert file_name.endswith(".json")
             integration_name = file_name.split(".")[0]
@@ -35,9 +35,9 @@ class MockInput():
                         self.mock_data[integration_name][resource_name] = {}
                     for operation_name, json_data_for_operation in json_data_for_resource.items():
                         if self.mock_data[integration_name][resource_name].get(operation_name, -1) == -1:
-                            self.mock_data[integration_name][resource_name][operation_name] = []
-                            for data_pair in json_data_for_operation:
-                                self.mock_data[integration_name][resource_name][operation_name].append(data_pair)
+                            self.mock_data[integration_name][resource_name][
+                                operation_name
+                            ] = list(json_data_for_operation)
 
     def _flash(self):
         """
@@ -55,11 +55,11 @@ class MockInput():
         """
         if not self.persist_on_destruction:
             return
-        
+
         print("persisting mock input dictionary")
         for integration, val in self.mock_data.items():
             try:
-                with open(os.path.join(self.mock_pair_dir, integration + '.json'), "w") as writer:
+                with open(os.path.join(self.mock_pair_dir, f'{integration}.json'), "w") as writer:
                     json.dump(val, writer, indent=4)
             except Exception as e:
                 print(e)

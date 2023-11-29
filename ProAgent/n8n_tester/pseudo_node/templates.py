@@ -35,9 +35,9 @@ def format_replace_exp_workflow(data_item: dict, expression: str):
     replaces the expression "{name}" with the value "John" and the expression "{age}"
     with the value "30" in the string "Hello, {name}! You are {age} years old.".
     """
-    replace_exp_workflow = {
+    return {
         "meta": {
-        "instanceId": "c14b6327b27c1dfe99ed7d452fafcd4d8e371aa8906a65b2508cc554e201c539"
+            "instanceId": "c14b6327b27c1dfe99ed7d452fafcd4d8e371aa8906a65b2508cc554e201c539"
         },
         "nodes": [
             {
@@ -45,72 +45,44 @@ def format_replace_exp_workflow(data_item: dict, expression: str):
                 "name": "Execute Workflow Trigger",
                 "type": "n8n-nodes-base.executeWorkflowTrigger",
                 "typeVersion": 1,
-                "position": [
-                    0,
-                    0
-                ],
-                "parameters": {}
+                "position": [0, 0],
+                "parameters": {},
             },
             {
-                "parameters": {
-                "jsCode": f"return [{json.dumps(data_item)}]"
-                },
+                "parameters": {"jsCode": f"return [{json.dumps(data_item)}]"},
                 "id": "5b7fc8cc-50d0-48d4-bdf1-7e55d0b29521",
                 "name": "Code",
                 "type": "n8n-nodes-base.code",
                 "typeVersion": 2,
-                "position": [
-                -60,
-                820
-                ]
+                "position": [-60, 820],
             },
             {
                 "parameters": {
-                "mode": "runOnceForEachItem",
-                "jsCode": "$input.item.json = {\n  formatted:`" + expression + "`\n}\n\nreturn $input.item;"
+                    "mode": "runOnceForEachItem",
+                    "jsCode": "$input.item.json = {\n  formatted:`"
+                    + expression
+                    + "`\n}\n\nreturn $input.item;",
                 },
                 "id": "2326a464-286f-46d4-8059-1b510bbd1654",
                 "name": "node_var",
                 "type": "n8n-nodes-base.code",
                 "typeVersion": 2,
-                "position": [
-                120,
-                800
-                ]
-            }
+                "position": [120, 800],
+            },
         ],
         "connections": {
             "Execute Workflow Trigger": {
-                "main": [
-                    [
-                        {
-                            "node": "Code",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
+                "main": [[{"node": "Code", "type": "main", "index": 0}]]
             },
             "Code": {
-                "main": [
-                    [
-                        {
-                            "node": "node_var",
-                            "type": "main",
-                            "index": 0
-                        }
-                    ]
-                ]
-            }
+                "main": [[{"node": "node_var", "type": "main", "index": 0}]]
+            },
         },
         "active": False,
-        "settings": {
-            "executionOrder": "v1"
-        },
+        "settings": {"executionOrder": "v1"},
         "tags": [],
-        "id": "ovm4ntEU37IYs7PI"
+        "id": "ovm4ntEU37IYs7PI",
     }
-    return replace_exp_workflow
 def format_return_data(return_list:list) -> str:
     """
     Generate the formatted return data for the given return list.

@@ -81,7 +81,7 @@ class TestResult():
         pass
 
     def to_str(self):
-        prompt = f"""
+        return f"""
 This function has been executed for {self.visit_times} times. Last execution:
 1.Status: {self.runtime_status.name}
 2.Input: 
@@ -89,7 +89,6 @@ This function has been executed for {self.visit_times} times. Last execution:
 
 3.Output:
 {self.output_data}"""
-        return prompt
 
 @dataclass
 class Action():
@@ -126,8 +125,7 @@ class userQuery():
     
     def print_self(self):
         lines = [self.task]
-        for info in self.additional_information:
-            lines.append(f"- {info}")
+        lines.extend(f"- {info}" for info in self.additional_information)
         return "\n".join(lines)
 
 class Singleton(abc.ABCMeta, type):
@@ -137,11 +135,11 @@ class Singleton(abc.ABCMeta, type):
 
     _instances = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(self, *args, **kwargs):
         """Call method for the singleton metaclass."""
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+        if self not in self._instances:
+            self._instances[self] = super(Singleton, self).__call__(*args, **kwargs)
+        return self._instances[self]
 
 class AbstractSingleton(abc.ABC, metaclass=Singleton):
     """

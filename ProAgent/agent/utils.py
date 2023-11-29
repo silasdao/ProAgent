@@ -36,10 +36,9 @@ def _chat_completion_request_atomic(**json_data):
     """
     openai.api_key = os.environ.get('OPENAI_API_KEY')
     openai.api_base = os.environ.get('OPENAI_API_BASE')
-    response = openai.ChatCompletion.create(
-                **json_data,
-            )
-    return response
+    return openai.ChatCompletion.create(
+        **json_data,
+    )
 
 @func_set_timeout(60)
 def _chat_completion_request_without_retry(default_completion_kwargs, messages, functions=None,function_call=None, stop=None,restrict_cache_query=True ,recorder:RunningRecoder=None, **args):
@@ -91,7 +90,7 @@ def _chat_completion_request_without_retry(default_completion_kwargs, messages, 
         else:
             response = None
 
-        if response == None:
+        if response is None:
             response = _chat_completion_request_atomic(**json_data)
             response = json.loads(str(response))
 
@@ -103,9 +102,9 @@ def _chat_completion_request_without_retry(default_completion_kwargs, messages, 
                                     stop = stop,
                                     other_args = args,
                                     output_data = response)
-        
+
         return response, LLMStatusCode.SUCCESS
-    
+
     except Exception as e:
         traceback.print_exc()
         logger.info("Unable to generate ChatCompletion response")
@@ -140,5 +139,5 @@ def _chat_completion_request(**args):
             if output_code == LLMStatusCode.SUCCESS:
                 return output
         except func_timeout.exceptions.FunctionTimedOut: #TLE
-            logger.info(f"LLM response time out")
+            logger.info("LLM response time out")
             continue

@@ -49,34 +49,31 @@ def replace_single_exp(data_item:dict, expression:str) -> str:
     - If the execution is not successful or the modified expression is empty, a `BaseException` is raised.
     - If the `expression` does not start with '=', it is returned as is.
     """
-    if expression.startswith('='):
+    if not expression.startswith('='):
+        return expression
+    expression = format_expression(expression[1:])
 
-        expression = format_expression(expression[1:])
-        
-        # substitute workflow (data_item, expression)
-        replace_exp_workflow = format_replace_exp_workflow(data_item, expression)
+    # substitute workflow (data_item, expression)
+    replace_exp_workflow = format_replace_exp_workflow(data_item, expression)
 
-        temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".json")
-        json.dump(replace_exp_workflow, temp_file)
-        temp_file.close()
-        temp_file_path = temp_file.name
-        result = subprocess.run(["n8n", "execute", "--file", temp_file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
-        output = result.stdout.decode('utf-8')
+    temp_file = tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".json")
+    json.dump(replace_exp_workflow, temp_file)
+    temp_file.close()
+    temp_file_path = temp_file.name
+    result = subprocess.run(["n8n", "execute", "--file", temp_file_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = result.stdout.decode('utf-8')
 
-        print(colored(output, color='green'))
+    print(colored(output, color='green'))
 
-        if success_prompt in output:
-            output_data = output.split(success_prompt)[-1]
-            if output_data != "":
-                output_data = json.loads(output_data)
-                output_data = output_data["data"]["resultData"]["runData"]["node_var"][0]["data"]["main"][0]
-                return output_data[0]['json']['formatted']
-            else:
-                raise BaseException()
-        else:
-            raise BaseException()
-        
-    return expression
+    if success_prompt not in output:
+        raise BaseException()
+
+    output_data = output.split(success_prompt)[-1]
+    if output_data == "":
+        raise BaseException()
+    output_data = json.loads(output_data)
+    output_data = output_data["data"]["resultData"]["runData"]["node_var"][0]["data"]["main"][0]
+    return output_data[0]['json']['formatted']
 
 def replace_exp_recursive(data_item: dict, expression_dict: dict) -> dict:
     """
@@ -92,13 +89,12 @@ def replace_exp_recursive(data_item: dict, expression_dict: dict) -> dict:
     """
 
     return_dict = {}
-    for key in expression_dict.keys():
-            expression_value = expression_dict[key]                
-            if type(expression_value) == dict:
-                return_dict[key] = replace_exp_recursive(data_item, expression_value)
-            elif type(expression_value) == str:
-                output = replace_single_exp(data_item, expression_value)
-                return_dict[key] = output
+    for key, expression_value in expression_dict.items():
+        if type(expression_value) == dict:
+            return_dict[key] = replace_exp_recursive(data_item, expression_value)
+        elif type(expression_value) == str:
+            output = replace_single_exp(data_item, expression_value)
+            return_dict[key] = output
     return return_dict
 
 def replace_exp(input_data:list, expression_dict:dict) -> list:

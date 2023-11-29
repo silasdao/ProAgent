@@ -21,27 +21,19 @@ def _str_helper(self, indent):
         str: The string representation of the object.
     """
     parts = []
-    
+
     # Iterate over the attributes of the object
     for k, v in self.__dict__.items():
         if isinstance(v, CfgNode):
-            parts.append("%s:\n" % k)
-            parts.append(self._str_helper(indent + 1))  # Recursive call for nested objects
+            parts.extend(("%s:\n" % k, self._str_helper(indent + 1)))
         else:
             parts.append("%s: %s\n" % (k, v))
-    
+
     # Add indentation to each part
     parts = [' ' * (indent * 4) + p for p in parts]
-    
+
     # Concatenate the parts into a single string
     return "".join(parts)
-
-    def to_dict(self):
-        """ return a dict representation of the config """
-        return { k: v.to_dict() if isinstance(v, CfgNode) else v for k, v in self.__dict__.items() }
-
-    def merge_from_dict(self, d):
-        self.__dict__.update(d)
 
 def merge_from_args(self, args):
     """
@@ -63,7 +55,9 @@ def merge_from_args(self, args):
     """
     for arg in args:
         keyval = arg.split('=')
-        assert len(keyval) == 2, "Expecting each override arg to be of form --arg=value, got %s" % arg
+        assert (
+            len(keyval) == 2
+        ), f"Expecting each override arg to be of form --arg=value, got {arg}"
         key, val = keyval # unpack
 
         # First translate val into a python object
@@ -85,7 +79,7 @@ def merge_from_args(self, args):
         assert hasattr(obj, leaf_key), f"{key} is not an attribute that exists in the config"
 
         # Overwrite the attribute
-        print("Command line overwriting config attribute %s with %s" % (key, val))
+        print(f"Command line overwriting config attribute {key} with {val}")
         setattr(obj, leaf_key, val)
 
 from .n8n_parser.knowledge import knowledge

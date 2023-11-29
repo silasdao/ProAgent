@@ -53,9 +53,15 @@ class ReACTHandler():
 
         Note: This function runs indefinitely until interrupted.
         """
+        # cut some messages down, only allow for last_num messages
+        last_num = 3
         while True:
-            messages = []
-            messages.append({"role":"system","content": deepcopy(react_prompt.system_prompt_1)})
+            messages = [
+                {
+                    "role": "system",
+                    "content": deepcopy(react_prompt.system_prompt_1),
+                }
+            ]
             messages.append({"role":"system","content": deepcopy(react_prompt.system_prompt_2)})
 
             specific_prompt = deepcopy(react_prompt.system_prompt_3)
@@ -63,19 +69,19 @@ class ReACTHandler():
             specific_prompt = specific_prompt.replace("{{flatten_tools}}", self.compiler.print_flatten_tools())
             messages.append({"role":"system","content": specific_prompt})
 
-            # cut some messages down, only allow for last_num messages
-            last_num = 3
             for k, (assistant_message, parsed_action) in enumerate(zip(self.messages, self.actions)):
                 if k < len(self.messages) - last_num:
                     continue
-                messages.append(assistant_message)
-                messages.append({
-                    "role":"function",
-                    "name": parsed_action.tool_name,
-                    "content": parsed_action.tool_output,
-                })
-            
-
+                messages.extend(
+                    (
+                        assistant_message,
+                        {
+                            "role": "function",
+                            "name": parsed_action.tool_name,
+                            "content": parsed_action.tool_output,
+                        },
+                    )
+                )
             user_prompt = deepcopy(react_prompt.user_prompt)
 
             refine_prompt = ""
@@ -93,7 +99,7 @@ class ReACTHandler():
             user_prompt = user_prompt.replace("{{now_codes}}", self.compiler.code_runner.print_code())
 
             messages.append({"role":"user","content": user_prompt})
-            
+
             functions = get_intrinsic_functions()
 
             agent = OpenAIFunction()

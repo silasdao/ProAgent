@@ -251,7 +251,7 @@ class RunningRecoder():
         Returns:
             None
         """
-        with open(os.path.join(self.record_root_dir, f"README.md"), "w") as writer:
+        with open(os.path.join(self.record_root_dir, "README.md"), "w") as writer:
             writer.write(markdown)
     
     def is_final_cache(self):

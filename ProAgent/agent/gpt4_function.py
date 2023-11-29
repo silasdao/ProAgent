@@ -26,7 +26,7 @@ class OpenAIFunction():
         """
         retry_time = 1
         max_time = 3
-        for i in range(max_time):
+        for _ in range(max_time):
             output = _chat_completion_request(**args)
 
             if isinstance(output, Dict):
@@ -36,9 +36,8 @@ class OpenAIFunction():
 
                 if "function_call" in message.keys():
                     break
-                else:
-                    args['messages'].append({"role": "assistant", "content": message['content']})
-                    args['messages'].append({"role": 'user', "content": "No Function call here! You should always use a function call as your response."})
+                args['messages'].append({"role": "assistant", "content": message['content']})
+                args['messages'].append({"role": 'user', "content": "No Function call here! You should always use a function call as your response."})
             retry_time += 1
             logger._log(f"{Fore.RED} Retry for the {retry_time}'th time{Style.RESET_ALL}")
 
@@ -50,7 +49,5 @@ class OpenAIFunction():
         function_name = message["function_call"]["name"]
         function_arguments = json.loads(message["function_call"]["arguments"], strict=False)
 
-        content = ""
-        if "content" in message.keys():
-            content = message["content"]
+        content = message["content"] if "content" in message.keys() else ""
         return content, function_name, function_arguments, message

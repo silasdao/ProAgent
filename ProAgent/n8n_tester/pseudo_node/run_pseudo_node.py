@@ -31,6 +31,4 @@ def run_pseudo_workflow(input_data: list, constant_workflow: n8nPythonWorkflow) 
         return_list = run_ai_completion(params_list)
     else:
         return_list = []
-    final_return_data = fill_return_data(return_list)
-
-    return final_return_data
+    return fill_return_data(return_list)

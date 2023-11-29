@@ -77,10 +77,9 @@ class n8nPythonNode():
 
     def print_self_clean(self):
         """Returns a multiline text."""
-        lines = []
         input_data = "input_data: List[Dict] =  [{...}]" if self.node_meta.node_type == NodeType.action else ""
         define_line = f"def {self.get_name()}({input_data}):"
-        lines.append(define_line)
+        lines = [define_line]
         param_json = {}
         for key, value in self.params.items():
             param = value.to_json()
@@ -103,7 +102,7 @@ class n8nPythonNode():
         lines.extend(param_str)
 
         lines.append(f"  function = transparent_{self.node_meta.node_type.name}(integration=\"{self.node_meta.integration_name}\", resource=\"{self.node_meta.resource_name}\", operation=\"{self.node_meta.operation_name}\")")
-    
+
         if self.node_meta.node_type == NodeType.action:
             lines.append( "  output_data = function.run(input_data=input_data, params=params)")
         else:
@@ -116,21 +115,19 @@ class n8nPythonNode():
 
     def print_self(self):
         """Returns a multiline text."""
-        lines = []
         input_data = "input_data: List[Dict] =  [{...}]" if self.node_meta.node_type == NodeType.action else ""
         define_line = f"def {self.get_name()}({input_data}):"
-        lines.append(define_line)
+        lines = [define_line]
         if self.node_comments != "" or self.note_todo != []:
             lines.append(f"  \"\"\"")
         if self.node_comments != "":
             lines.append(f"  comments: {self.node_comments}")
-        
+
         if self.note_todo != []:
-            lines.append(f"  TODOs: ")
-            for todo in self.note_todo:
-                lines.append(f"    - {todo}")
+            lines.append("  TODOs: ")
+            lines.extend(f"    - {todo}" for todo in self.note_todo)
         lines.append(f"  \"\"\"")
-        
+
         param_json = {}
         for key, value in self.params.items():
             param = value.to_json()
@@ -153,7 +150,7 @@ class n8nPythonNode():
         lines.extend(param_str)
 
         lines.append(f"  function = transparent_{self.node_meta.node_type.name}(integration=\"{self.node_meta.integration_name}\", resource=\"{self.node_meta.resource_name}\", operation=\"{self.node_meta.operation_name}\")")
-    
+
         if self.node_meta.node_type == NodeType.action:
             lines.append( "  output_data = function.run(input_data=input_data, params=params)")
         else:
@@ -184,7 +181,7 @@ class n8nPythonNode():
             tool_status = ToolCallStatus.ParamTypeError
             return tool_status, json.dumps({"error": f"Parameter Type Error: The parameter is expected to be a json format string which can be parsed as dict type. However, you are giving string parsed as {type(param_json)}", "result": "Nothing happened.", "status": tool_status.name})
 
-        for key in param_json.keys():
+        for key in param_json:
             if key not in new_params.keys():
                 tool_status = ToolCallStatus.UndefinedParam
                 return tool_status, json.dumps({"error": f"Undefined input parameter \"{key}\" for {self.get_name()}.Supported parameters: {list(new_params.keys())}", "result": "Nothing happened.", "status": tool_status.name})

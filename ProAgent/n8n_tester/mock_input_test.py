@@ -35,14 +35,12 @@ class MockInputTest(unittest.TestCase):
             operation_name=operation_name
         )
 
-        # Create an instance of n8nPythonNode and associate it with the custom n8nNodeMeta
-        node = n8nPythonNode(
+        return n8nPythonNode(
             # node_id=1,
             node_meta=custom_meta,
             node_comments="Test node for mock_input_test",
             # Other attributes as needed
         )
-        return node
 
     def test_basic_fetch(self):
         """
